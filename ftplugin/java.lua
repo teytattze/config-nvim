@@ -1,4 +1,3 @@
-local capabilities = vim.lsp.protocol.make_client_capabilities()
 local on_attach = function(_, bufnr)
     local nmap = function(keys, func, desc)
         if desc then
@@ -33,12 +32,70 @@ local on_attach = function(_, bufnr)
     end, { desc = 'Format current buffer with LSP' })
 end
 
+local jdtls = require('jdtls')
+local jdtls_setup = require('jdtls.setup')
 
-local config = {
-    capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities),
-    cmd = { '/Library/Java/jdt-language-server/bin/jdtls' },
-    on_attach = on_attach,
-    root_dir = vim.fs.dirname(vim.fs.find({ 'gradlew', '.git', 'mvnw' }, { upward = true })[1]),
+local home = os.getenv('HOME')
+
+local root_markers = { '.git', 'mvnw', 'gradlew' }
+local root_dir = jdtls_setup.find_root(root_markers)
+
+local project_name = vim.fn.fnamemodify(root_dir, ':p:h:t')
+local workspace_dir = home .. '/.cache/jdtls/workspace' .. project_name
+
+local mason_packages_path = home .. '/.local/share/nvim/mason/packages'
+
+local jdtls_path = mason_packages_path .. '/jdtls'
+local jdtls_config_path = jdtls_path .. '/config_mac'
+local jdtls_lombok_path = jdtls_path .. '/lombok.jar'
+local jdtls_jar_path = jdtls_path .. '/plugins/org.eclipse.equinox.launcher_1.6.600.v20231106-1826.jar'
+
+local config = {}
+
+config.cmd = {
+    -- 💀
+    'java', -- or '/path/to/java17_or_newer/bin/java'
+    -- depends on if `java` is in your $PATH env variable and if it points to the right version.
+
+    '-Declipse.application=org.eclipse.jdt.ls.core.id1',
+    '-Dosgi.bundles.defaultStartLevel=4',
+    '-Declipse.product=org.eclipse.jdt.ls.core.product',
+    '-Dlog.protocol=true',
+    '-Dlog.level=ALL',
+    '-Xmx1g',
+    '-javaagent:' .. jdtls_lombok_path,
+    '--add-modules=ALL-SYSTEM',
+    '--add-opens',
+    'java.base/java.util=ALL-UNNAMED',
+    '--add-opens',
+    'java.base/java.lang=ALL-UNNAMED',
+
+    -- 💀
+    '-jar',
+    jdtls_jar_path,
+    -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                       ^^^^^^^^^^^^^^
+    -- Must point to the                                                     Change this to
+    -- eclipse.jdt.ls installation                                           the actual version
+
+    -- 💀
+    '-configuration',
+    jdtls_config_path,
+    -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^        ^^^^^^
+    -- Must point to the                      Change to one of `linux`, `win` or `mac`
+    -- eclipse.jdt.ls installation            Depending on your system.
+
+    -- 💀
+    -- See `data directory configuration` section in the README
+    '-data',
+    workspace_dir,
 }
 
-require('jdtls').start_or_attach(config)
+config.settings = {
+    java = {},
+}
+
+config.on_attach = on_attach
+
+config.rootdir = root_dir
+
+jdtls.start_or_attach(config)
