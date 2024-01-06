@@ -2,11 +2,15 @@ return {
     'nvim-treesitter/nvim-treesitter',
     dependencies = {
         'nvim-treesitter/nvim-treesitter-textobjects',
+        'windwp/nvim-ts-autotag',
     },
     build = ':TSUpdate',
-
     config = function()
-        require('nvim-treesitter.configs').setup({
+        local autotag = require('nvim-ts-autotag')
+        local treesitter = require('nvim-treesitter.configs')
+
+        autotag.setup()
+        treesitter.setup({
             autotag = {
                 enable = true,
                 enable_rename = true,
@@ -14,6 +18,7 @@ return {
                 enable_close_on_slash = true,
                 filetypes = { 'astro', 'html', 'javascriptreact', 'jsx', 'markdown', 'typescriptreact', 'tsx', 'xml' },
             },
+
             ensure_installed = {
                 'c',
                 'cpp',
@@ -30,9 +35,7 @@ return {
                 'vim',
                 'bash',
             },
-
             auto_install = true,
-
             highlight = { enable = true },
             indent = { enable = true },
             incremental_selection = {
