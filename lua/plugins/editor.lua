@@ -104,18 +104,29 @@ return {
             },
         },
         config = function()
-            require('telescope').setup({
+            local telescope = require('telescope')
+            local telescope_actions = require('telescope.actions')
+            local telescope_actions_state = require('telescope.actions.state')
+            local telescope_builtin = require('telescope.builtin')
+
+            telescope.setup({
                 defaults = {
                     mappings = {
                         i = {
                             ['<C-u>'] = false,
-                            ['<C-d>'] = false,
+                            ['<C-d>'] = function(prompt_bufnr)
+                                local current_picker = telescope_actions_state.get_current_picker(prompt_bufnr)
+                                current_picker:delete_selection(function(selection)
+                                    return pcall(vim.api.nvim_buf_delete, selection.bufnr, { force = true })
+                                end)
+                                telescope_actions.move_selection_next(prompt_bufnr)
+                            end,
                         },
                     },
                 },
             })
 
-            pcall(require('telescope').load_extension, 'fzf')
+            pcall(telescope.load_extension, 'fzf')
 
             local function find_git_root()
                 local current_file = vim.api.nvim_buf_get_name(0)
@@ -139,51 +150,122 @@ return {
             local function live_grep_git_root()
                 local git_root = find_git_root()
                 if git_root then
-                    require('telescope.builtin').live_grep({
+                    telescope_builtin.live_grep({
                         search_dirs = { git_root },
                     })
                 end
             end
 
             vim.api.nvim_create_user_command('LiveGrepGitRoot', live_grep_git_root, {})
-
-            vim.keymap.set(
-                'n',
-                '<leader>?',
-                require('telescope.builtin').oldfiles,
-                { desc = '[?] Find recently opened files' }
-            )
-            vim.keymap.set(
-                'n',
-                '<leader><space>',
-                require('telescope.builtin').buffers,
-                { desc = '[ ] Find existing buffers' }
-            )
+            vim.keymap.set('n', '<leader>?', telescope_builtin.oldfiles, { desc = '[?] Find recently opened files' })
+            vim.keymap.set('n', '<leader><space>', telescope_builtin.buffers, { desc = '[ ] Find existing buffers' })
             vim.keymap.set('n', '<leader>/', function()
-                require('telescope.builtin').current_buffer_fuzzy_find(require('telescope.themes').get_dropdown({
+                telescope_builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown({
                     winblend = 10,
                     previewer = false,
                 }))
             end, { desc = '[/] Fuzzily search in current buffer' })
 
-            vim.keymap.set('n', '<leader>gf', require('telescope.builtin').git_files, { desc = 'Search [G]it [F]iles' })
-            vim.keymap.set('n', '<leader>sf', require('telescope.builtin').find_files, { desc = '[S]earch [F]iles' })
-            vim.keymap.set('n', '<leader>sh', require('telescope.builtin').help_tags, { desc = '[S]earch [H]elp' })
-            vim.keymap.set(
-                'n',
-                '<leader>sw',
-                require('telescope.builtin').grep_string,
-                { desc = '[S]earch current [W]ord' }
-            )
-            vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
+            vim.keymap.set('n', '<leader>gf', telescope_builtin.git_files, { desc = 'Search [G]it [F]iles' })
+            vim.keymap.set('n', '<leader>sf', telescope_builtin.find_files, { desc = '[S]earch [F]iles' })
+            vim.keymap.set('n', '<leader>sh', telescope_builtin.help_tags, { desc = '[S]earch [H]elp' })
+            vim.keymap.set('n', '<leader>sw', telescope_builtin.grep_string, { desc = '[S]earch current [W]ord' })
+            vim.keymap.set('n', '<leader>sg', telescope_builtin.live_grep, { desc = '[S]earch by [G]rep' })
             vim.keymap.set('n', '<leader>sG', ':LiveGrepGitRoot<cr>', { desc = '[S]earch by [G]rep on Git Root' })
-            vim.keymap.set(
-                'n',
-                '<leader>sd',
-                require('telescope.builtin').diagnostics,
-                { desc = '[S]earch [D]iagnostics' }
-            )
-            vim.keymap.set('n', '<leader>sr', require('telescope.builtin').resume, { desc = '[S]earch [R]esume' })
+            vim.keymap.set('n', '<leader>sd', telescope_builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
+            vim.keymap.set('n', '<leader>sr', telescope_builtin.resume, { desc = '[S]earch [R]esume' })
+        end,
+    },
+
+    {
+        'ThePrimeagen/harpoon',
+        branch = 'harpoon2',
+        dependencies = { 'nvim-lua/plenary.nvim' },
+        config = function()
+            local harpoon = require('harpoon')
+            local telescope_actions = require('telescope.actions')
+            local telescope_actions_state = require('telescope.actions.state')
+            local telescope_config = require('telescope.config')
+            local telescope_finders = require('telescope.finders')
+            local telescope_pickers = require('telescope.pickers')
+
+            harpoon:setup({})
+
+            local telescope_toggle_harpoon = function(harpoon_files)
+                local file_paths = {}
+                for _, item in ipairs(harpoon_files.items) do
+                    table.insert(file_paths, item.value)
+                end
+
+                telescope_pickers
+                    .new({}, {
+                        prompt_title = 'Harpoon',
+                        finder = telescope_finders.new_table({
+                            results = file_paths,
+                        }),
+                        previewer = telescope_config.values.file_previewer({}),
+                        sorter = telescope_config.values.generic_sorter({}),
+                        attach_mappings = function(_, map)
+                            local function list_find(list, func)
+                                for i, v in ipairs(list) do
+                                    if func(v, i, list) then
+                                        return i, v
+                                    end
+                                end
+                            end
+
+                            telescope_actions.select_default:replace(function(prompt_bufnr)
+                                local curr_picker = telescope_actions_state.get_current_picker(prompt_bufnr)
+                                local curr_entry = telescope_actions_state.get_selected_entry()
+                                if not curr_entry then
+                                    return
+                                end
+                                telescope_actions.close(prompt_bufnr)
+
+                                local idx, _ = list_find(curr_picker.finder.results, function(v)
+                                    if curr_entry.value == v.value then
+                                        return true
+                                    end
+                                    return false
+                                end)
+                                harpoon:list():select(idx)
+                            end)
+
+                            map({ 'n', 'i' }, '<C-d>', function(prompt_bufnr)
+                                local current_picker = telescope_actions_state.get_current_picker(prompt_bufnr)
+                                current_picker:delete_selection(function(selection)
+                                    harpoon:list():removeAt(selection.index)
+                                end)
+                            end)
+                            return true
+                        end,
+                    })
+                    :find()
+            end
+
+            vim.keymap.set('n', '<leader>hsf', function()
+                telescope_toggle_harpoon(harpoon:list())
+            end, { desc = '[H]arpoon [S]earch [F]iles' })
+
+            vim.keymap.set('n', '<leader>ha', function()
+                harpoon:list():append()
+            end, { desc = '[H]arpoon [A]ppend File' })
+
+            vim.keymap.set('n', '<leader>hr', function()
+                harpoon:list():remove()
+            end, { desc = '[H]arpoon [R]emove File' })
+
+            vim.keymap.set('n', '<leader>hc', function()
+                harpoon:list():clear()
+            end, { desc = '[H]arpoon [C]lear' })
+
+            vim.keymap.set('n', '<C-S-P>', function()
+                harpoon:list():prev()
+            end, { desc = 'Harpoon previous stored buffer' })
+
+            vim.keymap.set('n', '<C-S-N>', function()
+                harpoon:list():next()
+            end, { desc = 'Harpoon next stored buffer' })
         end,
     },
 
