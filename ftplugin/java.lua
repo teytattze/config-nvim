@@ -52,6 +52,19 @@ local jdtls_jar_path = jdtls_path .. '/plugins/org.eclipse.equinox.launcher_1.6.
 
 local config = {}
 
+config.capabilities = {
+    workspace = {
+        configuration = true,
+    },
+    textDocument = {
+        completion = {
+            completionItem = {
+                snippetSupport = true,
+            },
+        },
+    },
+}
+
 config.cmd = {
     -- 💀
     'java', -- or '/path/to/java17_or_newer/bin/java'
@@ -90,11 +103,51 @@ config.cmd = {
     workspace_dir,
 }
 
+config.flags = {
+    allow_incremental_sync = true,
+}
+
 config.settings = {
-    java = {},
+    java = {
+        references = {
+            includeDecompiledSources = true,
+        },
+        format = {
+            enable = true,
+            settings = {
+                url = 'https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml',
+                profile = 'GoogleStyle',
+            },
+        },
+        completion = {
+            favoriteStaticMembers = {
+                'org.hamcrest.MatcherAssert.assertThat',
+                'org.hamcrest.Matchers.*',
+                'org.hamcrest.CoreMatchers.*',
+                'org.junit.jupiter.api.Assertions.*',
+                'java.util.Objects.requireNonNull',
+                'java.util.Objects.requireNonNullElse',
+                'org.mockito.Mockito.*',
+            },
+            filteredTypes = {
+                'com.sun.*',
+                'io.micrometer.shaded.*',
+                'java.awt.*',
+                'jdk.*',
+                'sun.*',
+            },
+            importOrder = {
+                '#',
+            },
+        },
+    },
 }
 
 config.on_attach = on_attach
+
+config.on_init = function(client, _)
+    client.notify('workspace/didChangeConfiguration', { settings = config.settings })
+end
 
 config.rootdir = root_dir
 
