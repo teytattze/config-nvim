@@ -1,36 +1,3 @@
-local on_attach = function(_, bufnr)
-    local nmap = function(keys, func, desc)
-        if desc then
-            desc = 'LSP: ' .. desc
-        end
-        vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc, noremap = true, silent = true })
-    end
-
-    nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
-    nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
-
-    nmap('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
-    nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-    nmap('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
-    nmap('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
-    nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-    nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
-
-    nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
-    nmap('<leader>k', vim.lsp.buf.signature_help, 'Signature Documentation')
-
-    nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-    nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
-    nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
-    nmap('<leader>wl', function()
-        print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-    end, '[W]orkspace [L]ist Folders')
-
-    vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
-        vim.lsp.buf.format()
-    end, { desc = 'Format current buffer with LSP' })
-end
-
 return {
     {
         'folke/neodev.nvim',
@@ -58,38 +25,43 @@ return {
         },
         lazy = false,
         config = function()
-            require('mason').setup({})
-            require('mason-lspconfig').setup({
+            local cmp_nvim_lsp = require('cmp_nvim_lsp')
+            local lspconfig = require('lspconfig')
+            local mason = require('mason')
+            local mason_lspconfig = require('mason-lspconfig')
+            local neodev = require('neodev')
+            local utils_lsp = require('utils.lsp')
+
+            mason.setup({})
+            mason_lspconfig.setup({
                 ensure_installed = { 'lua_ls', 'tsserver', 'jdtls' },
             })
+            neodev.setup()
 
-            local border = 'rounded'
             local orig_util_open_floating_preview = vim.lsp.util.open_floating_preview
             function vim.lsp.util.open_floating_preview(contents, syntax, opts, ...)
                 opts = opts or {}
-                opts.border = opts.border or border
+                opts.border = opts.border or 'rounded'
                 return orig_util_open_floating_preview(contents, syntax, opts, ...)
             end
 
-            local lspconfig = require('lspconfig')
-            local neodev = require('neodev')
-
-            neodev.setup()
-
             local capabilities = vim.lsp.protocol.make_client_capabilities()
-            capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
+            capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
 
             lspconfig.gradle_ls.setup({
                 capabilities = capabilities,
-                on_attach = on_attach,
-                rootdir = function(fname)
-                    return lspconfig.util.root_pattern('gradlew', '.git')(fname)
-                end,
+                on_attach = utils_lsp.on_attach,
+                rootdir = utils_lsp.root_pattern('gradlew', '.git'),
+            })
+
+            lspconfig.marksman.setup({
+                capabilities = capabilities,
+                on_attach = utils_lsp.on_attach,
             })
 
             lspconfig.lua_ls.setup({
                 capabilities = capabilities,
-                on_attach = on_attach,
+                on_attach = utils_lsp.on_attach,
                 settings = {
                     Lua = {
                         diagnostics = {
@@ -101,9 +73,52 @@ return {
                 },
             })
 
+            lspconfig.tailwindcss.setup({
+                capabilities = capabilities,
+                on_attach = utils_lsp.on_attach,
+                cmd = { 'tailwindcss-language-server', '--stdio' },
+                filetypes = {
+                    'astro',
+                    'astro-markdown',
+                    'gohtml',
+                    'gohtmltmpl',
+                    'html',
+                    'css',
+                    'postcss',
+                    'javascript',
+                    'javascriptreact',
+                    'typescript',
+                    'typescriptreact',
+                    'vue',
+                    'svelte',
+                },
+                settings = {
+                    tailwindCSS = {
+                        classAttributes = { 'class', 'className', 'class:list', 'classList', 'ngClass' },
+                        experimental = {
+                            classRegex = {
+                                { 'cx\\(([^)]*)\\)', '(?:\'|"|`)([^\']*)(?:\'|"|`)' },
+                                { 'cn\\(([^)]*)\\)', '(?:\'|"|`)([^\']*)(?:\'|"|`)' },
+                                { 'cva\\(([^)]*)\\)', '["\'`]([^"\'`]*).*?["\'`]' },
+                            },
+                        },
+                        lint = {
+                            cssConflict = 'warning',
+                            invalidApply = 'error',
+                            invalidConfigPath = 'error',
+                            invalidScreen = 'error',
+                            invalidTailwindDirective = 'error',
+                            invalidVariant = 'error',
+                            recommendedVariantOrder = 'warning',
+                        },
+                        validate = true,
+                    },
+                },
+            })
+
             lspconfig.tsserver.setup({
                 capabilities = capabilities,
-                on_attach = on_attach,
+                on_attach = utils_lsp.on_attach,
                 cmd = { 'typescript-language-server', '--stdio' },
                 filetypes = {
                     'javascript',
@@ -118,9 +133,7 @@ return {
                         importModuleSpecifierPreference = 'non-relative',
                     },
                 },
-                rootdir = function(fname)
-                    return lspconfig.util.root_pattern('package.json', 'tsconfig.json', 'jsconfig.json', '.git')(fname)
-                end,
+                rootdir = utils_lsp.root_pattern('package.json', 'tsconfig.json', 'jsconfig.json', '.git'),
                 single_file_support = true,
             })
         end,
