@@ -19,7 +19,7 @@ local opts = {
         lazy = true,
     },
     install = {
-        colorscheme = { 'tokyonight' },
+        colorscheme = { 'catppuccin' },
     },
     change_detection = {
         notify = false,
