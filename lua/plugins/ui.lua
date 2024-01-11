@@ -3,7 +3,8 @@ return {
         'folke/which-key.nvim',
         lazy = false,
         config = function()
-            require('which-key').register({
+            local which_key = require('which-key')
+            which_key.register({
                 ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
                 ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
                 ['<leader>g'] = { name = '[G]it', _ = 'which_key_ignore' },
