@@ -34,7 +34,7 @@ return {
 
             mason.setup({})
             mason_lspconfig.setup({
-                ensure_installed = { 'lua_ls', 'tsserver', 'jdtls' },
+                ensure_installed = { 'gopls', 'lua_ls', 'tsserver', 'jdtls' },
             })
             neodev.setup()
 
@@ -47,6 +47,15 @@ return {
 
             local capabilities = vim.lsp.protocol.make_client_capabilities()
             capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
+
+            lspconfig.gopls.setup({
+                capabilities = capabilities,
+                on_attach = utils_lsp.on_attach,
+                cmd = { 'gopls' },
+                filetypes = { 'go', 'gomod', 'gowork', 'gotmpl' },
+                rootdir = utils_lsp.root_pattern('.git', 'go.work', 'go.mod'),
+                single_file_support = true,
+            })
 
             lspconfig.gradle_ls.setup({
                 capabilities = capabilities,
@@ -97,8 +106,8 @@ return {
                         classAttributes = { 'class', 'className', 'class:list', 'classList', 'ngClass' },
                         experimental = {
                             classRegex = {
-                                { 'cx\\(([^)]*)\\)', '(?:\'|"|`)([^\']*)(?:\'|"|`)' },
-                                { 'cn\\(([^)]*)\\)', '(?:\'|"|`)([^\']*)(?:\'|"|`)' },
+                                { 'cx\\(([^)]*)\\)',  '(?:\'|"|`)([^\']*)(?:\'|"|`)' },
+                                { 'cn\\(([^)]*)\\)',  '(?:\'|"|`)([^\']*)(?:\'|"|`)' },
                                 { 'cva\\(([^)]*)\\)', '["\'`]([^"\'`]*).*?["\'`]' },
                             },
                         },
