@@ -2,7 +2,7 @@ local jdtls = require('jdtls')
 local utils_lsp = require('utils.lsp')
 
 local home = os.getenv('HOME')
-
+local root_dir = utils_lsp.get_root('.git', 'mvnw', 'gradlew')
 local project_name = vim.fn.fnamemodify(root_dir, ':p:h:t')
 local workspace_dir = home .. '/.cache/jdtls/workspace' .. project_name
 
@@ -112,6 +112,6 @@ config.on_init = function(client, _)
     client.notify('workspace/didChangeConfiguration', { settings = config.settings })
 end
 
-config.rootdir = utils_lsp.get_root('.git', 'mvnw', 'gradlew')
+config.rootdir = root_dir
 
 jdtls.start_or_attach(config)
