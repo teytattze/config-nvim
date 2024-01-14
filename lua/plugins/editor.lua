@@ -69,7 +69,6 @@ return {
             neotree.setup({
                 popup_border_style = 'rounded',
                 window = {
-                    position = 'float',
                     mappings = {
                         ['-'] = 'open_split',
                         ['|'] = 'open_vsplit',
@@ -92,7 +91,7 @@ return {
 
     {
         'nvim-telescope/telescope.nvim',
-        tag = '0.1.4',
+        version = '0.1.x',
         dependencies = {
             'nvim-lua/plenary.nvim',
             {
