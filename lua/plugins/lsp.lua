@@ -48,6 +48,14 @@ return {
             local capabilities = vim.lsp.protocol.make_client_capabilities()
             capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
 
+            lspconfig.astro.setup({
+                capabilities = capabilities,
+                on_attach = utils_lsp.on_attach,
+                cmd = { 'astro-ls', '--stdio' },
+                filetypes = { 'astro' },
+                rootdir = utils_lsp.root_pattern('package.json', 'tsconfig.json', 'jsconfig.json', '.git'),
+            })
+
             lspconfig.gopls.setup({
                 capabilities = capabilities,
                 on_attach = utils_lsp.on_attach,
@@ -106,8 +114,8 @@ return {
                         classAttributes = { 'class', 'className', 'class:list', 'classList', 'ngClass' },
                         experimental = {
                             classRegex = {
-                                { 'cx\\(([^)]*)\\)',  '(?:\'|"|`)([^\']*)(?:\'|"|`)' },
-                                { 'cn\\(([^)]*)\\)',  '(?:\'|"|`)([^\']*)(?:\'|"|`)' },
+                                { 'cx\\(([^)]*)\\)', '(?:\'|"|`)([^\']*)(?:\'|"|`)' },
+                                { 'cn\\(([^)]*)\\)', '(?:\'|"|`)([^\']*)(?:\'|"|`)' },
                                 { 'cva\\(([^)]*)\\)', '["\'`]([^"\'`]*).*?["\'`]' },
                             },
                         },
