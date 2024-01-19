@@ -22,6 +22,7 @@ return {
             'hrsh7th/nvim-cmp',
             'hrsh7th/cmp-buffer',
             'hrsh7th/cmp-nvim-lsp',
+            'scalameta/nvim-metals',
         },
         lazy = false,
         config = function()
@@ -29,6 +30,8 @@ return {
             local lspconfig = require('lspconfig')
             local mason = require('mason')
             local mason_lspconfig = require('mason-lspconfig')
+            local metals = require('metals')
+            local metals_config = require('metals').bare_config()
             local neodev = require('neodev')
             local utils_lsp = require('utils.lsp')
 
@@ -152,6 +155,22 @@ return {
                 },
                 rootdir = utils_lsp.root_pattern('package.json', 'tsconfig.json', 'jsconfig.json', '.git'),
                 single_file_support = true,
+            })
+
+            -- scala
+            metals_config.capabilities = capabilities
+            metals_config.on_attach = utils_lsp.on_attach
+            metals_config.settings = {
+                showImplicitArguments = true,
+                excludedPackages = {},
+            }
+            local nvim_metals_group = vim.api.nvim_create_augroup('nvim-metals', { clear = true })
+            vim.api.nvim_create_autocmd('FileType', {
+                pattern = { 'scala', 'sbt', 'java' },
+                callback = function()
+                    metals.initialize_or_attach(metals_config)
+                end,
+                group = nvim_metals_group,
             })
         end,
     },
