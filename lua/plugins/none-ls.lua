@@ -14,7 +14,7 @@ return {
                     extra_args = {
                         '-c',
                         require('jdtls.setup').find_root({ '.git', 'mvnw', 'gradlew' })
-                        .. '/_config/checkstyle/google_checks.xml',
+                            .. '/_config/checkstyle/google_checks.xml',
                     },
                 }),
 
@@ -24,6 +24,9 @@ return {
 
                 -- go
                 null_ls.builtins.formatting.gofmt,
+
+                -- scala
+                null_ls.builtins.formatting.scalafmt,
             },
         })
     end,
