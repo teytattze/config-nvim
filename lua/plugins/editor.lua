@@ -69,6 +69,8 @@ return {
             neotree.setup({
                 popup_border_style = 'rounded',
                 window = {
+                    width = 56,
+                    position = 'left',
                     mappings = {
                         ['-'] = 'open_split',
                         ['|'] = 'open_vsplit',
