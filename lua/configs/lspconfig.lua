@@ -69,19 +69,39 @@ local servers = {
   },
 
   -- python python-lsp-server
-  pylsp = {
+  -- pylsp = {
+  --   on_attach = nvlsp.on_attach,
+  --   on_init = nvlsp.on_init,
+  --   capabilities = nvlsp.capabilities,
+  --   settings = {
+  --     pylsp = {
+  --       plugins = {
+  --         pyflakes = {
+  --           enabled = false,
+  --         },
+  --         pycodestyle = {
+  --           enabled = false,
+  --         },
+  --       },
+  --     },
+  --   },
+  -- },
+
+  -- python pyright
+  pyright = {
     on_attach = nvlsp.on_attach,
     on_init = nvlsp.on_init,
     capabilities = nvlsp.capabilities,
     settings = {
-      pylsp = {
-        plugins = {
-          pyflakes = {
-            enabled = false,
-          },
-          pycodestyle = {
-            enabled = false,
-          },
+      pyright = {
+        disableOrganizeImports = false,
+      },
+      python = {
+        analysis = {
+          autoSearchPaths = true,
+          diagnosticMode = "openFilesOnly",
+          typeCheckingMode = "basic",
+          useLibraryCodeForTypes = true,
         },
       },
     },
@@ -103,6 +123,18 @@ local servers = {
 
   -- java
   gradle_ls = {
+    on_attach = nvlsp.on_attach,
+    on_init = nvlsp.on_init,
+    capabilities = nvlsp.capabilities,
+  },
+
+  -- terraform
+  terraformls = {
+    on_attach = nvlsp.on_attach,
+    on_init = nvlsp.on_init,
+    capabilities = nvlsp.capabilities,
+  },
+  tflint = {
     on_attach = nvlsp.on_attach,
     on_init = nvlsp.on_init,
     capabilities = nvlsp.capabilities,

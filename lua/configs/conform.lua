@@ -13,7 +13,8 @@ M.opts = {
     typescript = { "prettier" },
     typescriptreact = { "prettier" },
     python = { "ruff_organize_imports", "ruff_format" },
-    go = { "gofmt" }
+    go = { "gofmt" },
+    terraform = { "terraform_fmt" }
   },
 
   format_on_save = {

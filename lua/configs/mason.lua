@@ -31,7 +31,11 @@ M.opts = {
     "gopls",
 
     -- misc
-    "json-lsp"
+    "json-lsp",
+
+    -- terraform
+    "terraformls",
+    "tflint",
   },
 }
 

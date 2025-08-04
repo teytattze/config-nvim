@@ -2,13 +2,13 @@
 local M = {}
 
 M.base46 = {
-	theme = "catppuccin",
+  theme = "rosepine",
   transparency = true,
 }
 
 M.ui = {
   telescope = {
-    style = "borderless"
+    style = "borderless",
   },
 }
 
